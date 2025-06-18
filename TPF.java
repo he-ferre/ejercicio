@@ -5,33 +5,36 @@ import java.util.Scanner;
 public class TPF{
     public static void main(String [] args){
 
+        Scanner scanner = new Scanner(System.in);
+        Random random = new Random();
+
         final int arrLong = 25;
 
         int [] tablero = tableros.cargarTablero(arrLong);
         int [] tableroEventos = tableros.inicializarEventos(arrLong);
         tableros.cargarEventos(arrLong, tableroEventos);
 
-        logicaDeJuego.correrJuego(tablero, tableroEventos,arrLong);
+        logicaDeJuego.correrJuego(tablero, tableroEventos,arrLong,scanner,random);
     }
 }
 class dado{
-        public static int tirarDado(){
+        public static int tirarDado(Scanner scanner, Random random){
 
-        Scanner scanner = new Scanner(System.in);
+        //Scanner scanner = new Scanner(System.in);
 
         
             System.out.println("Presiona ENTER para tirar el dado:");
             scanner.nextLine();
-            int numero = numeroRamdom.numeroDado();
+            int numero = numeroRandom.numeroDado(random);
             System.out.print("Dado: ");
             System.out.println(numero);
         
         return numero;
     }
 }
-class numeroRamdom{
-    public static int numeroDado(){
-        Random random = new Random();
+class numeroRandom{
+    public static int numeroDado(Random random){
+        // Random random = new Random();
         int limiteSuperior = 7; // Genera numeros del 0 al 6
 
         int numeroAleatorio = random.nextInt(1,limiteSuperior);
@@ -49,26 +52,31 @@ class tableros{
 
         // posiciones especiales 
         tablero[4] = 10;
-        tablero[14] = 13;
+        tablero[5] = 13;
         tablero[11] = 8;
-        tablero[24] = 15;
+        tablero[23] = 15;
+        tablero[9] = 20;
+        tablero[22] = 24;
+        
 
         return  tablero;
     } 
     public static void cargarEventos(int arrLong, int [] tableroEventos){
         Random random = new Random();
-
+        int cont = 0;
         // Cargo dos eventos 1 y dos -1
-        for(int i = 0; i < 2; i++){
+        while (cont < 4){
 
             int numeroRandom = random.nextInt(arrLong);
-            if(i < 1){
+            if(cont < 2){
                 if(tableroEventos[numeroRandom] == 0){
                     tableroEventos[numeroRandom] = 1;
+                    cont++;
                 }
             }else{
                 if(tableroEventos[numeroRandom] == 0){
                     tableroEventos[numeroRandom] = -1;
+                    cont++;
                 }
             }
         }
@@ -104,36 +112,51 @@ class tableros{
     public static void eventos(int [] tablero, int [] tableroEventos, int posicion, int jugador, int arrLong,int posDos,int jugadordos){
 
         if((posicion < arrLong)&&(tableroEventos[posicion] == 1)){
+            // Modifico tablero eventos donde habia un 1 , De esta manera ya no se puede usar el evento 
+            tableroEventos[posicion] = 0;
             for(int i = posicion + 1; i < arrLong - 1 ; i++){
                 if(tablero[i] != 0){
                     tablero[i + 1] = tablero[i];
                     tablero[i] = 0;
                     i++;
+                }if(i == arrLong -1 ){
+                    while(tablero[i] == 0){
+                        i--;
+                    }
+                    tablero[i] = 0; //elimino la ultima casilla de salto
                 }
             }
-            if(tablero[arrLong -1 ]  != 0){
-                    tablero[arrLong - 1] = 0;
-            }
+            // if(tablero[arrLong -1 ]  != 0){
+            //         tablero[arrLong - 1] = 0;
+            // }
 
             System.out.println("El jugador " + jugador + " cayo en la posicion " + posicion + " donde hay un 1 : ");
-            System.out.println("Se produjo el movimiento de los saltos posteriores 1 lugar hacia adelante:  ");
+            System.out.println("Se produjo el movimiento de los saltos posteriores 1 lugar hacia adelante y se elimino el ultimo salto:  ");
             // revisar
             impresiones.imprimirTablero(tablero, arrLong, posicion, posDos);
             System.out.println("");
 
         }else if((posicion < arrLong)&&(tableroEventos[posicion] == -1)){
-            for(int i = posicion + 1; i < arrLong - 1 ; i++){
+            for(int i = posicion + 1; i < arrLong ; i++){
                 if(tablero[i] != 0){
-                    tablero[i - 1] = tablero[i];
-                    tablero[i] = 0;
-                    i++;
+                    if(i - 1 >= 0 ){
+                        tablero[i - 1] = tablero[i];
+                        tablero[i] = 0;
+                    }
                 }
-            }            
-            if(tablero[arrLong -1 ]  != 0){
-                    tablero[arrLong - 1] = 0;
             }
+
+            for(int i = 0 ; i < arrLong; i++){
+                if(tablero[i] != 0){
+                    tablero[i] = 0;
+                    break;
+                }
+            }
+            // if(tablero[arrLong -1 ]  != 0){
+            //         tablero[arrLong - 1] = 0;
+            // }
             System.out.println("El jugador " + jugador + " cayo en la posicion " + posicion + " donde hay un -1 : ");
-            System.out.println("Se produjo el movimiento de los saltos posteriores 1 lugar hacia atras:  ");
+            System.out.println("Se produjo el movimiento de los saltos posteriores 1 lugar hacia atras y se elimno el primer salto:  ");
 
             impresiones.imprimirTablero(tablero, arrLong, posicion, posDos);
             System.out.println("");
@@ -193,7 +216,7 @@ class impresiones{
     }
 }
 class logicaDeJuego{
-    public static void correrJuego(int [] tablero,int [] tableroEventos,int arrLong){
+    public static void correrJuego(int [] tablero,int [] tableroEventos,int arrLong, Scanner scanner, Random random){
 
         boolean ganador = false;
         int jugadorUno = 1, jugadorDos = 2;
@@ -225,11 +248,14 @@ class logicaDeJuego{
 
         while(!ganador){
         System.out.println("~~ TURNO DEL JUGADOR UNO: ~~ ");
-        numeroDado = dado.tirarDado();
+        numeroDado = dado.tirarDado(scanner,random);
         posJugadorUno += numeroDado;
 
         // verificar salto
         posJugadorUno = tableros.saltos(tablero, posJugadorUno,arrLong,jugadorUno);
+
+        // // Verificar victoria
+        // ganador = tableros.victoria(arrLong,posJugadorUno,jugadorUno);
 
         // verificar eventos  --------> REVISAR EVENTOS!!!!!!!!!!!!!
         tableros.eventos(tablero, tableroEventos, posJugadorUno, jugadorUno, arrLong,posJugadorDos,jugadorDos);     // revisar eventos>>> 
@@ -241,17 +267,25 @@ class logicaDeJuego{
         posJugadorUno = tableros.posicionExcedida(posJugadorUno,numeroDado,arrLong,jugadorUno);
         System.out.println("El jugador " + jugadorUno + " esta en la posicion " + posJugadorUno);
 
-        // Verificar victoria
+        // // Verificar victoria
         ganador = tableros.victoria(arrLong,posJugadorUno,jugadorUno);
-       
+        //fuerzo la victoria
+        if(ganador == true){
+            break;
+        }
+
+
         System.out.println("-------------------------------------------------------------------------------------------------------------");
 
         System.out.println("~~ TURNO DEL JUGADOR DOS: ~~ ");
-        numeroDado = dado.tirarDado();
+        numeroDado = dado.tirarDado(scanner, random);
         posJugadorDos += numeroDado;
 
         // verificar salto
         posJugadorDos = tableros.saltos(tablero, posJugadorDos,arrLong,jugadorDos);
+
+        // // Verificar victoria
+        // ganador = tableros.victoria(arrLong,posJugadorDos,jugadorDos);
 
         // verificar eventos  --------> REVISAR EVENTOS!!!!!!!!!!!!!
         tableros.eventos(tablero, tableroEventos, posJugadorDos, jugadorDos, arrLong,posJugadorUno,jugadorUno);     // revisar eventos>>> 
@@ -263,9 +297,13 @@ class logicaDeJuego{
         posJugadorDos = tableros.posicionExcedida(posJugadorDos,numeroDado,arrLong,jugadorDos);
         System.out.println("El jugador " + jugadorDos + " esta en la posicion " + posJugadorDos);
 
-        // Verificar victoria
+        // // Verificar victoria
         ganador = tableros.victoria(arrLong,posJugadorDos,jugadorDos);
 
+        //Fuerzo la victoria
+        if(ganador == true){
+            break;
+        }
         System.out.println("-------------------------------------------------------------------------------------------------------------");
 
         }
